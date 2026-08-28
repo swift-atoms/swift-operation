@@ -1,0 +1,10 @@
+# .github/metadata.yaml
+description: "Ownership-aware operation symbols and typed applications for Swift."
+topics:
+  - primitives
+  - operations
+  - ownership
+  - type-safety
+homepage: "https://swift-institute.org"
+readme:
+  family: O
