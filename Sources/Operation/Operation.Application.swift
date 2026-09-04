@@ -1,5 +1,6 @@
 extension Operation {
     public typealias Application<Index: Symbol> = _Application<Index, Index.Input>
+    where Index.Input: ~Copyable & ~Escapable
 }
 
 extension Operation {
