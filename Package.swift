@@ -13,8 +13,8 @@ let package = Package(
     ],
     products: [
         .library(name: "Operation", targets: ["Operation"]),
-        .library(name: "Operation Standard Library Integration", targets: ["Operation Standard Library Integration"]),
-        .library(name: "Operation Foundation Library Integration", targets: ["Operation Foundation Library Integration"]),
+
+        .library(name: "Operation Foundation Integration", targets: ["Operation Foundation Integration"]),
         .library(name: "Operation Test Support", targets: ["Operation Test Support"]),
     ],
     dependencies: [],
@@ -25,20 +25,13 @@ let package = Package(
             ],
             path: "Sources/Operation"
         ),
+        
         .target(
-            name: "Operation Standard Library Integration",
+            name: "Operation Foundation Integration",
             dependencies: [
                 .target(name: "Operation"),
             ],
-            path: "Sources/Operation Standard Library Integration"
-        ),
-        .target(
-            name: "Operation Foundation Library Integration",
-            dependencies: [
-                .target(name: "Operation"),
-                .target(name: "Operation Standard Library Integration"),
-            ],
-            path: "Sources/Operation Foundation Library Integration"
+            path: "Sources/Operation Foundation Integration"
         ),
         .target(
             name: "Operation Test Support",
@@ -52,8 +45,7 @@ let package = Package(
             dependencies: [
                 .target(name: "Operation"),
                 .target(name: "Operation Test Support"),
-                .target(name: "Operation Standard Library Integration"),
-                .target(name: "Operation Foundation Library Integration"),
+                .target(name: "Operation Foundation Integration"),
             ],
             path: "Tests/Operation Tests",
             resources: [.copy("Fixtures")]

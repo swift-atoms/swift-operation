@@ -28,6 +28,6 @@ extension Operation {
     }
 }
 
-extension Operation._Application: Copyable where Input: Copyable {}
+extension Operation._Application: Swift.Copyable where Input: Swift.Copyable {}
 
-extension Operation._Application: Escapable where Input: Escapable {}
+extension Operation._Application: Swift.Escapable where Input: Swift.Escapable {}
