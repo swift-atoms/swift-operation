@@ -100,6 +100,9 @@ extension Operation {
             _ application: borrowing Operation.Application<Index>
         ) where Index.Input == String, Index.Output == Int, Index.Failure == Never {}
 
+        static func requireSendable<Value: Sendable & ~Copyable>(_: borrowing Value) {}
+        static func requireHashable<Value: Hashable>(_: Value) {}
+
         static func read(_ application: borrowing Operation.Application<Consume>) -> Int {
             application.input.value
         }
@@ -147,6 +150,17 @@ extension Operation.`Applications preserve their input` {
         let input = application.consume()
 
         #expect(input.value == 42)
+    }
+
+    @Test
+    func `An application is Sendable, Equatable and Hashable exactly when its input is`() {
+        let application = Operation.Application<Self.Echo>("forty-two")
+        Self.requireSendable(application)
+        Self.requireHashable(application)
+
+        #expect(application == Operation.Application<Self.Echo>("forty-two"))
+        #expect(application != Operation.Application<Self.Echo>("forty-three"))
+        #expect(application.hashValue == Operation.Application<Self.Echo>("forty-two").hashValue)
     }
 
     @Test

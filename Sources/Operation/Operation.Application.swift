@@ -31,3 +31,17 @@ extension Operation {
 extension Operation._Application: Swift.Copyable where Input: Swift.Copyable {}
 
 extension Operation._Application: Swift.Escapable where Input: Swift.Escapable {}
+
+extension Operation._Application: Swift.Sendable where Input: Swift.Sendable {}
+
+extension Operation._Application: Swift.Equatable where Input: Swift.Equatable {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.storage == rhs.storage
+    }
+}
+
+extension Operation._Application: Swift.Hashable where Input: Swift.Hashable {
+    public func hash(into hasher: inout Swift.Hasher) {
+        hasher.combine(storage)
+    }
+}
