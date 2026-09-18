@@ -11,5 +11,8 @@ extension Operation {
     // A symbol whose owner is an interface: its Call is the owner's, and runs the same way.
     public protocol Composed: Operable {
         associatedtype Call: Coproduct where Call.Owner == Owner
+
+        /// This operation, as a call of its interface.
+        static func call(_ input: consuming Input) -> Call
     }
 }

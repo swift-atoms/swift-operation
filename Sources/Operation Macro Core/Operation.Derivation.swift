@@ -18,7 +18,13 @@ extension Operation {
                 return DeclSyntax(stringLiteral: """
                     \(access)enum \(symbol.name): Operation::Operation.Operable\(composed) {
                         \(access)typealias Owner = \(owner)
-                    \(analysis.isComposed ? "\(access)typealias Call = \(owner).Call" : "")
+                    \(analysis.isComposed ? """
+                        \(access)typealias Call = \(owner).Call
+
+                        \(access)static func call(_ input: consuming Input) -> \(owner).Call {
+                            .\(symbol.caseName)(input)
+                        }
+                    """ : "")
                     \(input(of: symbol, access: access))
 
                         \(access)typealias Output = \(symbol.output.trimmedDescription)
