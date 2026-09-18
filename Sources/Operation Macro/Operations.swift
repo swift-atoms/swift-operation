@@ -1,0 +1,10 @@
+@_exported import Operation
+
+// Every function of the protocol becomes a symbol beside it — `Owner.Greet: Operation.Symbol` with the
+// function's parameters as `Input`, its result as `Output`, its thrown error as `Failure`. The protocol must be
+// nested in the type that holds the symbols; that type's name qualifies them.
+@attached(peer, names: arbitrary)
+public macro Operations() = #externalMacro(
+    module: "Operation_Macro_Plugin",
+    type: "Macro"
+)

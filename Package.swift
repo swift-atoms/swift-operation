@@ -1,5 +1,6 @@
 // swift-tools-version: 6.4
 
+import CompilerPluginSupport
 import PackageDescription
 
 let package = Package(
@@ -14,10 +15,14 @@ let package = Package(
     products: [
         .library(name: "Operation", targets: ["Operation"]),
 
+        .library(name: "Operation Macro", targets: ["Operation Macro"]),
+        .library(name: "Operation Macro Core", targets: ["Operation Macro Core"]),
         .library(name: "Operation Foundation Integration", targets: ["Operation Foundation Integration"]),
         .library(name: "Operation Test Support", targets: ["Operation Test Support"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", "603.0.2"..<"604.0.0"),
+    ],
     targets: [
         .target(
             name: "Operation",
@@ -40,6 +45,37 @@ let package = Package(
             ],
             path: "Tests/Support"
         ),
+        .target(
+            name: "Operation Macro Core",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+            ]
+        ),
+        .macro(
+            name: "Operation Macro Plugin",
+            dependencies: [
+                "Operation Macro Core",
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+            ]
+        ),
+        .target(
+            name: "Operation Macro",
+            dependencies: [
+                "Operation Macro Plugin",
+                .target(name: "Operation"),
+            ]
+        ),
+        .testTarget(
+            name: "Operation Macro Tests",
+            dependencies: [
+                "Operation Macro",
+                "Operation Macro Core",
+                .product(name: "SwiftParser", package: "swift-syntax"),
+            ]
+        ),
         .testTarget(
             name: "Operation Tests",
             dependencies: [
@@ -54,7 +90,7 @@ let package = Package(
     swiftLanguageModes: [.v6]
 )
 
-for target in package.targets {
+for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     target.swiftSettings = [
         .strictMemorySafety(),
         .enableUpcomingFeature("ExistentialAny"),
