@@ -57,7 +57,7 @@ extension Operation {
             let header = symbol.transfers
                 ? "\(access)struct Input: ~Copyable, Swift.Sendable {"
                 : symbol.inputs.count == 1
-                    ? "@dynamicMemberLookup\n\(access)struct Input: Swift.Hashable, Swift.Sendable {"
+                    ? "@dynamicMemberLookup\n\(access)struct Input: Swift.Hashable, Swift.Sendable, Operation::Operation.Unary {"
                     : "\(access)struct Input: Swift.Hashable, Swift.Sendable {"
             let fields = symbol.inputs.map { input in
                 "\(access)var \(input.parameter.localName.text): \(input.type.trimmedDescription)"
@@ -73,6 +73,21 @@ extension Operation {
             let assignments = symbol.inputs.map { input in
                 "self.\(input.parameter.localName.text) = \(input.parameter.localName.text)"
             }.joined(separator: "\n")
+            // A one-field input is also built from its field, whatever the field's label.
+            let unary: String
+            if symbol.inputs.count == 1, !symbol.transfers,
+                symbol.inputs[0].parameter.declaration.firstName.tokenKind != .wildcard
+            {
+                let local = symbol.inputs[0].parameter.localName.text
+                unary = """
+
+                    \(access)init(_ field: \(symbol.inputs[0].type.trimmedDescription)) {
+                        self.\(local) = field
+                    }
+                """
+            } else {
+                unary = ""
+            }
             return """
                 \(header)
                 \(fields)
@@ -80,7 +95,7 @@ extension Operation {
                     \(access)init(\(parameters)) {
                     \(assignments)
                     }
-                \(forwarding)
+                \(unary)\(forwarding)
                 }
                 """
         }
