@@ -44,6 +44,10 @@ extension Operation {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
 
+                    \(access)subscript<Member>(dynamicMember keyPath: Swift.KeyPath<\(symbol.inputs[0].type.trimmedDescription), Member>) -> Member {
+                        \(symbol.inputs[0].parameter.localName.text)[keyPath: keyPath]
+                    }
+
                     \(access)subscript<Member>(dynamicMember keyPath: Swift.WritableKeyPath<\(symbol.inputs[0].type.trimmedDescription), Member>) -> Member {
                         get { \(symbol.inputs[0].parameter.localName.text)[keyPath: keyPath] }
                         set { \(symbol.inputs[0].parameter.localName.text)[keyPath: keyPath] = newValue }
