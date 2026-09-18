@@ -4,6 +4,8 @@ extension Operation {
 }
 
 extension Operation {
+    // An application reads as its input: `application.id` is `application.input.id`.
+    @dynamicMemberLookup
     @frozen
     public struct _Application<
         Index: Symbol,
@@ -25,6 +27,12 @@ extension Operation {
         public init(_ input: consuming Input) {
             storage = input
         }
+    }
+}
+
+extension Operation._Application where Input: Swift.Copyable & Swift.Escapable {
+    public subscript<Member>(dynamicMember keyPath: KeyPath<Input, Member>) -> Member {
+        input[keyPath: keyPath]
     }
 }
 

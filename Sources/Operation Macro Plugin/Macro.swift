@@ -11,6 +11,9 @@ public struct Macro: PeerMacro {
         guard let declaration = declaration.as(ProtocolDeclSyntax.self) else {
             throw MacroExpansionErrorMessage("@Operations applies to a protocol declaration only.")
         }
+        let isComposed = context.lexicalContext.first?.asProtocol((any WithAttributesSyntax).self)?.attributes.contains { attribute in
+            attribute.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "Interface"
+        } ?? false
         let owner = context.lexicalContext.first.flatMap { syntax -> TypeSyntax? in
             if let declaration = syntax.as(EnumDeclSyntax.self) {
                 return TypeSyntax(IdentifierTypeSyntax(name: declaration.name.trimmed))
@@ -26,7 +29,7 @@ public struct Macro: PeerMacro {
         guard let owner else {
             throw MacroExpansionErrorMessage("@Operations applies to a protocol nested in the type that will hold its symbols.")
         }
-        let analysis = Operation.Analysis(declaration: declaration, owner: owner)
+        let analysis = Operation.Analysis(declaration: declaration, owner: owner, isComposed: isComposed)
         guard analysis.diagnostics.isEmpty else {
             throw MacroExpansionErrorMessage(
                 "@Operations cannot read every operation: \(analysis.diagnostics.joined(separator: "; "))."

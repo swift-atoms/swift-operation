@@ -64,16 +64,20 @@ extension Operation {
 
         public let declaration: ProtocolDeclSyntax
         public let owner: TypeSyntax
+        /// Whether the owner is an `@Interface`: its symbols then also know the owner's Call.
+        public let isComposed: Bool
         public let symbols: [Symbol]
         public let diagnostics: [String]
 
         public init(
             declaration: ProtocolDeclSyntax,
             owner: TypeSyntax,
+            isComposed: Bool = false,
             shadowed: Set<String> = []
         ) {
             self.declaration = declaration
             self.owner = owner
+            self.isComposed = isComposed
             let functions = declaration.memberBlock.members.compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             let signatures = functions.map(Signature.init)
             let counts = Dictionary(grouping: signatures, by: \.name.text).mapValues(\.count)
