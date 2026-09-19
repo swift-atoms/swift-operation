@@ -14,9 +14,9 @@ extension Operation {
             let owner = analysis.owner.trimmedDescription
             return analysis.symbols.map { symbol in
                 let call = symbol.isPrimary ? "owner" : "owner.\(symbol.signature.name.text)"
-                let composed = analysis.isComposed ? ", Operation::Operation.Composed" : ""
+                let conformance = analysis.isComposed ? "Operation::Operation.Operable, Operation::Operation.Composed" : "Operation::Operation.Symbol"
                 return DeclSyntax(stringLiteral: """
-                    \(access)enum \(symbol.name): Operation::Operation.Operable\(composed) {
+                    \(access)enum \(symbol.name): \(conformance) {
                         \(access)typealias Owner = \(owner)
                     \(analysis.isComposed ? """
                         \(access)typealias Call = \(owner).Call
@@ -31,9 +31,11 @@ extension Operation {
                         \(access)typealias Failure = \(symbol.failure.trimmedDescription)
                         \(access)typealias Application = Operation::Operation.Application<Self>
 
+                    \(analysis.isComposed ? """
                         \(access)static func run(_ owner: \(owner), _ input: consuming Input)\(symbol.effects) -> Output {
                             \(symbol.signature.returnsVoid ? "" : "return ")\(symbol.prefix)\(call)(input)
                         }
+                    """ : "")
                     }
                     """)
             }

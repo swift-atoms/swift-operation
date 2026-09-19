@@ -135,7 +135,9 @@ extension Operation::Operation.`Compiler emission enforces application ownership
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
         process.arguments = [
-            "swiftc", "-c", optimization,
+            "swiftc",
+            "-enable-upcoming-feature", "MemberImportVisibility",
+            "-warnings-as-errors", "-c", optimization,
             "-swift-version", "6",
             "-enable-experimental-feature", "Lifetimes",
             "-module-name", "Proof",

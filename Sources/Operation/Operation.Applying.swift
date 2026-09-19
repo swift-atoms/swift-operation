@@ -11,4 +11,4 @@ extension Operation {
     }
 }
 
-extension Operation._Application: Operation.Applying where Input: Escapable {}
+extension Operation._Application: Operation.Applying where Input: ~Copyable & Escapable {}

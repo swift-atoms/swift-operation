@@ -13,10 +13,10 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
+        .library(name: "Operation Syntax", targets: ["Operation Syntax"]),
         .library(name: "Operation", targets: ["Operation"]),
 
         .library(name: "Operation Macro", targets: ["Operation Macro"]),
-        .library(name: "Operation Macro Core", targets: ["Operation Macro Core"]),
         .library(name: "Operation Foundation Integration", targets: ["Operation Foundation Integration"]),
         .library(name: "Operation Test Support", targets: ["Operation Test Support"]),
     ],
@@ -24,13 +24,17 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "603.0.2"..<"604.0.0"),
     ],
     targets: [
+        .target(name: "Operation Syntax", dependencies: [
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+            .product(name: "SwiftSyntax", package: "swift-syntax"),
+        ]),
         .target(
             name: "Operation",
             dependencies: [
             ],
             path: "Sources/Operation"
         ),
-        
+
         .target(
             name: "Operation Foundation Integration",
             dependencies: [
@@ -48,6 +52,7 @@ let package = Package(
         .target(
             name: "Operation Macro Core",
             dependencies: [
+                "Operation Syntax",
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
             ]
@@ -100,4 +105,9 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
         .enableExperimentalFeature("Lifetimes"),
         .enableUpcomingFeature("InferIsolatedConformances"),
     ]
+}
+
+// Consumer compilation must reject visibility regressions, even when other packages suppress warnings.
+for target in package.targets where target.type == .test || target.name.hasSuffix("Consumer Fixtures") {
+    target.swiftSettings = (target.swiftSettings ?? []) + [.treatAllWarnings(as: .error)]
 }
