@@ -28,3 +28,6 @@ private struct Independent {
     let call = Independent.Increment.call(.init(9))
     #expect(Independent.Increment.input(from: call)?.value == 9)
 }
+
+// Capabilities are declared using Swift protocols at the point of use.
+extension Independent.Increment.Input: Hashable, Sendable {}

@@ -92,3 +92,12 @@ struct `Operations Tests` {
         #expect(analysis.symbols[4].construction == "matching: prefix, limit: limit")
     }
 }
+
+// Capabilities are declared using Swift protocols at the point of use.
+extension Greeting.Greet.Input: Hashable, Sendable {}
+extension Greeting.Echo.Input: Hashable, Sendable {}
+extension Greeting.Run.Input: Hashable, Sendable {}
+extension Greeting.Id.Input: Hashable, Sendable {}
+extension Greeting.CompletedIn.Input: Hashable, Sendable {}
+extension Greeting.CompletedMatching.Input: Hashable, Sendable {}
+extension Linear.Consume.Input: Sendable {}

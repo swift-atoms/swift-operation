@@ -3,12 +3,8 @@ public import SwiftSyntax
 import SwiftSyntaxBuilder
 
 extension Operation {
-    // One symbol per operation, beside the protocol: an enum conforming to Operation.Symbol that carries the
-    // operation's Input as a value (the parameters, initialised with the declaration's labels), its Output and
-    // Failure, and its Application. The Input's capabilities are whatever the compiler synthesizes from its
-    // fields: Hashable (an input is a value) and Sendable (declared for convenience — a public type gets no
-    // implicit Sendable, and inputs cross into tasks; nothing here relies on it); Copyable is suppressed when a
-    // parameter is transferred.
+    // Symbols describe operations. Input capability conformances belong to their callers,
+    // using same-file native extensions; transferring a parameter suppresses Copyable.
     public enum Derivation {
         public static func peers(of analysis: Analysis) -> [DeclSyntax] {
             do { return try derive(analysis) }
@@ -74,10 +70,10 @@ extension Operation {
                 """
                 : ""
             let header = symbol.transfers
-                ? "\(access)struct Input: ~Copyable, Swift.Sendable {"
+                ? "\(access)struct Input: ~Copyable {"
                 : symbol.inputs.count == 1
-                    ? "@dynamicMemberLookup\n\(access)struct Input: Swift.Hashable, Swift.Sendable, Operation::Operation.Unary {"
-                    : "\(access)struct Input: Swift.Hashable, Swift.Sendable {"
+                    ? "@dynamicMemberLookup\n\(access)struct Input: Operation::Operation.Unary {"
+                    : "\(access)struct Input {"
             guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {
                 throw Type.Failure("operation input representation must match its product domain")
             }
