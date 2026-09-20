@@ -1,3 +1,4 @@
+public import Type_Algebra_Syntax
 public import SwiftSyntax
 import SwiftSyntaxBuilder
 
@@ -31,6 +32,13 @@ extension Operation {
             /// The lower-camel spelling of the symbol: its Call case, its model requirement, its label.
             public var caseName: String { "\(name.prefix(1).lowercased())\(name.dropFirst())" }
 
+            public var algebra: Type.Operation {
+                Type.Operation(caseName,
+                    input: .product(inputs.map { Type.Syntax.Expression($0.type, parameters: []).algebra }),
+                    output: signature.returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
+                    effect: signature.effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+            }
+
             public var transfers: Bool { inputs.contains { $0.parameter.transfersOwnership } }
 
             public func inputPath(owner: String) -> String { "\(owner).\(name).Input" }
@@ -62,9 +70,11 @@ extension Operation {
             "Input", "Output", "Failure", "Application", "Run",
         ]
 
+        public var algebra: Type.Signature { get throws { try Type.Signature(symbols.map(\.algebra)) } }
+
         public let declaration: ProtocolDeclSyntax
         public let owner: TypeSyntax
-        /// Whether the owner is an `@Interface`: its symbols then also know the owner's Call.
+        /// Explicit composition contract: symbols also know the owner's Call. No frontend is inferred.
         public let isComposed: Bool
         public let symbols: [Symbol]
         public let diagnostics: [String]

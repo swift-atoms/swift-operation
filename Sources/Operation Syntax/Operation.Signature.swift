@@ -1,3 +1,4 @@
+public import Type_Algebra_Syntax
 public import SwiftSyntax
 
 extension Operation {
@@ -64,6 +65,13 @@ extension Operation {
         public let thrownError: TypeSyntax?
         public let isUntypedThrows: Bool
         public let isRethrowing: Bool
+
+        public var algebra: Type.Operation {
+            Type.Operation(fullName,
+                input: .product(parameters.map { Type.Syntax.Expression($0.valueType, parameters: []).algebra }),
+                output: returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
+                effect: effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+        }
 
         public var effects: FunctionEffectSpecifiersSyntax? { declaration.signature.effectSpecifiers }
 

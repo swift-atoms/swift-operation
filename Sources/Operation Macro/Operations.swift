@@ -4,7 +4,7 @@
 // function's parameters as `Input`, its result as `Output`, its thrown error as `Failure`. The protocol must be
 // nested in the type that holds the symbols; that type's name qualifies them.
 @attached(peer, names: arbitrary)
-public macro Operations() = #externalMacro(
+public macro Operations(composed: Bool = false) = #externalMacro(
     module: "Operation_Macro_Plugin",
     type: "Macro"
 )

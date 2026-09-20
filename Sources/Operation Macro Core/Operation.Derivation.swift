@@ -1,3 +1,4 @@
+import Type_Algebra_Syntax
 public import SwiftSyntax
 import SwiftSyntaxBuilder
 
@@ -10,9 +11,17 @@ extension Operation {
     // parameter is transferred.
     public enum Derivation {
         public static func peers(of analysis: Analysis) -> [DeclSyntax] {
+            do { return try derive(analysis) }
+            catch { return [DeclSyntax(stringLiteral: "#error(\(String(reflecting: String(describing: error))))")] }
+        }
+
+        private static func derive(_ analysis: Analysis) throws -> [DeclSyntax] {
             let access = access(of: analysis.declaration)
             let owner = analysis.owner.trimmedDescription
-            return analysis.symbols.map { symbol in
+            return try analysis.algebra.operations.map { operation in
+                guard let symbol = analysis.symbols.first(where: { $0.caseName == operation.name }) else {
+                    throw Type.Failure("missing Swift representation for operation")
+                }
                 let call = symbol.isPrimary ? "owner" : "owner.\(symbol.signature.name.text)"
                 let conformance = analysis.isComposed ? "Operation::Operation.Operable, Operation::Operation.Composed" : "Operation::Operation.Symbol"
                 return DeclSyntax(stringLiteral: """
@@ -31,7 +40,7 @@ extension Operation {
                             }
                         }
                     """ : "")
-                    \(input(of: symbol, access: access))
+                    \(try input(of: symbol, domain: operation.input, access: access))
 
                         \(access)typealias Output = \(symbol.output.trimmedDescription)
                         \(access)typealias Failure = \(symbol.failure.trimmedDescription)
@@ -48,7 +57,7 @@ extension Operation {
         }
 
         // A one-field input reads as its field: `input.title` is `input.list.title`.
-        private static func input(of symbol: Analysis.Symbol, access: String) -> String {
+        private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String) throws -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
 
@@ -69,20 +78,22 @@ extension Operation {
                 : symbol.inputs.count == 1
                     ? "@dynamicMemberLookup\n\(access)struct Input: Swift.Hashable, Swift.Sendable, Operation::Operation.Unary {"
                     : "\(access)struct Input: Swift.Hashable, Swift.Sendable {"
-            let fields = symbol.inputs.map { input in
-                "\(access)var \(input.parameter.localName.text): \(input.type.trimmedDescription)"
-            }.joined(separator: "\n")
-            let parameters = symbol.inputs.map { input in
+            guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {
+                throw Type.Failure("operation input representation must match its product domain")
+            }
+            let inputRecord = try Type.Record(zip(symbol.inputs, factors).map { .init($0.parameter.localName.text, $1) })
+            let record = try Type.Syntax.Record(inputRecord) { coordinate in
+                guard let input = symbol.inputs.first(where: { $0.parameter.localName.text == coordinate.name }) else {
+                    throw Type.Failure("missing Swift representation for input")
+                }
                 let declaration = input.parameter.declaration
                 let label = declaration.firstName.tokenKind == .wildcard ? "_" : declaration.firstName.text
-                let local = input.parameter.localName.text
                 let type = input.type.trimmedDescription
-                let spelled = input.parameter.transfersOwnership ? "consuming \(type)" : type
-                return label == local ? "\(local): \(spelled)" : "\(label) \(local): \(spelled)"
-            }.joined(separator: ", ")
-            let assignments = symbol.inputs.map { input in
-                "self.\(input.parameter.localName.text) = \(input.parameter.localName.text)"
-            }.joined(separator: "\n")
+                return .init(input.parameter.localName.text, type: type, label: label,
+                    argument: input.parameter.transfersOwnership ? "consuming \(type)" : type)
+            }
+            let fields = record.declarations(access: access).joined(separator: "\n")
+            let initializer = try record.initializer(access: access)
             // A one-field input is also built from its field, whatever the field's label.
             let unary: String
             if symbol.inputs.count == 1, !symbol.transfers,
@@ -102,9 +113,7 @@ extension Operation {
                 \(header)
                 \(fields)
 
-                    \(access)init(\(parameters)) {
-                    \(assignments)
-                    }
+                    \(initializer)
                 \(unary)\(forwarding)
                 }
                 """

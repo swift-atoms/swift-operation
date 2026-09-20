@@ -4,16 +4,18 @@ import SwiftSyntaxMacros
 
 public struct Macro: PeerMacro {
     public static func expansion(
-        of _: AttributeSyntax,
+        of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let declaration = declaration.as(ProtocolDeclSyntax.self) else {
             throw MacroExpansionErrorMessage("@Operations applies to a protocol declaration only.")
         }
-        let isComposed = context.lexicalContext.first?.asProtocol((any WithAttributesSyntax).self)?.attributes.contains { attribute in
-            attribute.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "Interface"
-        } ?? false
+        let composition = node.arguments?.as(LabeledExprListSyntax.self)?.first(where: { $0.label?.text == "composed" })?.expression.trimmedDescription
+        guard composition == nil || composition == "true" || composition == "false" else {
+            throw MacroExpansionErrorMessage("@Operations composed must be a literal Boolean.")
+        }
+        let isComposed = composition == "true"
         let owner = context.lexicalContext.first.flatMap { syntax -> TypeSyntax? in
             if let declaration = syntax.as(EnumDeclSyntax.self) {
                 return TypeSyntax(IdentifierTypeSyntax(name: declaration.name.trimmed))
