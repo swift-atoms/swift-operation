@@ -24,6 +24,12 @@ extension Operation {
                         \(access)static func call(_ input: consuming Input) -> \(owner).Call {
                             .\(symbol.caseName)(input)
                         }
+                        \(access)static func input(from call: consuming Call) -> Input? {
+                            switch consume call {
+                            case let .\(symbol.caseName)(application): return application.consume()
+                            \(analysis.symbols.count == 1 && !analysis.declaration.memberBlock.members.contains(where: { $0.decl.is(VariableDeclSyntax.self) }) ? "" : "default: return nil")
+                            }
+                        }
                     """ : "")
                     \(input(of: symbol, access: access))
 
@@ -45,6 +51,8 @@ extension Operation {
         private static func input(of symbol: Analysis.Symbol, access: String) -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
+
+                    \(symbol.inputs[0].parameter.localName.text == "fieldValue" ? "" : "\(access)var fieldValue: \(symbol.inputs[0].type.trimmedDescription) { \(symbol.inputs[0].parameter.localName.text) }")
 
                     \(access)subscript<Member>(dynamicMember keyPath: Swift.KeyPath<\(symbol.inputs[0].type.trimmedDescription), Member>) -> Member {
                         \(symbol.inputs[0].parameter.localName.text)[keyPath: keyPath]
