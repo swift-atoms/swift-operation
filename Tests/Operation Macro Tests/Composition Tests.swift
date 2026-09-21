@@ -34,10 +34,10 @@ extension Independent.Increment.Input: Hashable, Sendable {}
 
 // A consumer can supply the connection explicitly; the leaf macro knows no Call layout.
 extension Independent.Increment: Operation.Composed {
-    typealias Call = Independent.Call
-    static func call(_ input: consuming Input) -> Call { .increment(input) }
-    static func input(from call: consuming Call) -> Input? {
+    fileprivate typealias Call = Independent.Call
+    fileprivate static func call(_ input: consuming Input) -> Call { .increment(input) }
+    fileprivate static func input(from call: consuming Call) -> Input? {
         switch call { case .increment(let application): return application.consume() }
     }
-    static func run(_ owner: Independent, _ input: consuming Input) -> Output { owner.increment(input) }
+    fileprivate static func run(_ owner: Independent, _ input: consuming Input) -> Output { owner.increment(input) }
 }
