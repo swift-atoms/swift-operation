@@ -7,36 +7,22 @@ extension Operation {
     // using native extensions or explicitly forwarded derivation attributes.
     // Transferring a parameter suppresses Copyable.
     public enum Derivation {
-        public static func peers(of analysis: Analysis, inputAttributes: [AttributeSyntax] = [], inputConformances: [String] = []) -> [DeclSyntax] {
-            do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances) }
+        public static func peers(of analysis: Analysis, inputAttributes: [AttributeSyntax] = [], inputConformances: [String] = [], conformances: [String] = [], members: (Analysis.Symbol) -> [DeclSyntax] = { _ in [] }) -> [DeclSyntax] {
+            do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances, conformances: conformances, members: members) }
             catch { return [DeclSyntax(stringLiteral: "#error(\(String(reflecting: String(describing: error))))")] }
         }
 
-        private static func derive(_ analysis: Analysis, inputAttributes: [AttributeSyntax], inputConformances: [String]) throws -> [DeclSyntax] {
+        private static func derive(_ analysis: Analysis, inputAttributes: [AttributeSyntax], inputConformances: [String], conformances: [String], members: (Analysis.Symbol) -> [DeclSyntax]) throws -> [DeclSyntax] {
             let access = access(of: analysis.declaration)
             let owner = analysis.owner.trimmedDescription
             return try analysis.algebra.operations.map { operation in
                 guard let symbol = analysis.symbols.first(where: { $0.caseName == operation.name }) else {
                     throw Type.Failure("missing Swift representation for operation")
                 }
-                let call = symbol.isPrimary ? "owner" : "owner.\(symbol.signature.name.text)"
-                let conformance = analysis.isComposed ? "Operation::Operation.Operable, Operation::Operation.Composed" : "Operation::Operation.Symbol"
+                let conformance = (["Operation::Operation.Symbol"] + conformances).joined(separator: ", ")
                 return DeclSyntax(stringLiteral: """
                     \(access)enum \(symbol.name): \(conformance) {
                         \(access)typealias Owner = \(owner)
-                    \(analysis.isComposed ? """
-                        \(access)typealias Call = \(owner).Call
-
-                        \(access)static func call(_ input: consuming Input) -> \(owner).Call {
-                            .\(symbol.caseName)(input)
-                        }
-                        \(access)static func input(from call: consuming Call) -> Input? {
-                            switch consume call {
-                            case let .\(symbol.caseName)(application): return application.consume()
-                            \(analysis.symbols.count == 1 && !analysis.declaration.memberBlock.members.contains(where: { $0.decl.is(VariableDeclSyntax.self) }) ? "" : "default: return nil")
-                            }
-                        }
-                    """ : "")
                     \(inputAttributes.map(\.trimmedDescription).joined(separator: "\n"))
                     \(try input(of: symbol, domain: operation.input, access: access, conformances: inputConformances))
 
@@ -44,11 +30,7 @@ extension Operation {
                         \(access)typealias Failure = \(symbol.failure.trimmedDescription)
                         \(access)typealias Application = Operation::Operation.Application<Self>
 
-                    \(analysis.isComposed ? """
-                        \(access)static func run(_ owner: \(owner), _ input: consuming Input)\(symbol.effects) -> Output {
-                            \(symbol.signature.returnsVoid ? "" : "return ")\(symbol.prefix)\(call)(input)
-                        }
-                    """ : "")
+                    \(members(symbol).map(\.trimmedDescription).joined(separator: "\n"))
                     }
                     """)
             }

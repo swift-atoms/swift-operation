@@ -6,7 +6,7 @@
 /// Attributes explicitly forwarded to each generated Input declaration.
 /// The operation macro does not interpret or implement those capabilities.
 @attached(peer, names: arbitrary)
-public macro Operations(composed: Bool = false, inputConformances: [String] = [], inputAttributes: String...) = #externalMacro(
+public macro Operations(inputConformances: [String] = [], inputAttributes: String...) = #externalMacro(
     module: "Operation_Macro_Plugin",
     type: "Macro"
 )
