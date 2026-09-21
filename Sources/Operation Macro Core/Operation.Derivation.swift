@@ -36,7 +36,7 @@ extension Operation {
             }
         }
 
-        // A one-field input reads as its field: `input.title` is `input.list.title`.
+        // A one-field input reads as its field: `input.title` is `input.list.title`; a no-field input is Nullary.
         private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String, conformances: [String]) throws -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
@@ -53,7 +53,7 @@ extension Operation {
                     }
                 """
                 : ""
-            let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : []) + conformances
+            let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : symbol.inputs.isEmpty ? ["Operation::Operation.Nullary"] : []) + conformances
             let header = (!symbol.transfers && symbol.inputs.count == 1 ? "@dynamicMemberLookup\n" : "")
                 + "\(access)struct Input" + (inherited.isEmpty ? "" : ": " + inherited.joined(separator: ", ")) + " {"
             guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {

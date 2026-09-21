@@ -18,4 +18,5 @@ extension Operation {
         /// The input of a call of this operation; nil when the call is another operation's.
         static func input(from call: consuming Call) -> Input?
     }
+
 }
