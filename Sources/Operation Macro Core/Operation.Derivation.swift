@@ -4,14 +4,15 @@ import SwiftSyntaxBuilder
 
 extension Operation {
     // Symbols describe operations. Input capability conformances belong to their callers,
-    // using same-file native extensions; transferring a parameter suppresses Copyable.
+    // using native extensions or explicitly forwarded derivation attributes.
+    // Transferring a parameter suppresses Copyable.
     public enum Derivation {
-        public static func peers(of analysis: Analysis) -> [DeclSyntax] {
-            do { return try derive(analysis) }
+        public static func peers(of analysis: Analysis, inputAttributes: [AttributeSyntax] = [], inputConformances: [String] = []) -> [DeclSyntax] {
+            do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances) }
             catch { return [DeclSyntax(stringLiteral: "#error(\(String(reflecting: String(describing: error))))")] }
         }
 
-        private static func derive(_ analysis: Analysis) throws -> [DeclSyntax] {
+        private static func derive(_ analysis: Analysis, inputAttributes: [AttributeSyntax], inputConformances: [String]) throws -> [DeclSyntax] {
             let access = access(of: analysis.declaration)
             let owner = analysis.owner.trimmedDescription
             return try analysis.algebra.operations.map { operation in
@@ -36,7 +37,8 @@ extension Operation {
                             }
                         }
                     """ : "")
-                    \(try input(of: symbol, domain: operation.input, access: access))
+                    \(inputAttributes.map(\.trimmedDescription).joined(separator: "\n"))
+                    \(try input(of: symbol, domain: operation.input, access: access, conformances: inputConformances))
 
                         \(access)typealias Output = \(symbol.output.trimmedDescription)
                         \(access)typealias Failure = \(symbol.failure.trimmedDescription)
@@ -53,7 +55,7 @@ extension Operation {
         }
 
         // A one-field input reads as its field: `input.title` is `input.list.title`.
-        private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String) throws -> String {
+        private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String, conformances: [String]) throws -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
 
@@ -69,11 +71,9 @@ extension Operation {
                     }
                 """
                 : ""
-            let header = symbol.transfers
-                ? "\(access)struct Input: ~Copyable {"
-                : symbol.inputs.count == 1
-                    ? "@dynamicMemberLookup\n\(access)struct Input: Operation::Operation.Unary {"
-                    : "\(access)struct Input {"
+            let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : []) + conformances
+            let header = (!symbol.transfers && symbol.inputs.count == 1 ? "@dynamicMemberLookup\n" : "")
+                + "\(access)struct Input" + (inherited.isEmpty ? "" : ": " + inherited.joined(separator: ", ")) + " {"
             guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {
                 throw Type.Failure("operation input representation must match its product domain")
             }

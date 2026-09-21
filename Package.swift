@@ -13,6 +13,7 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
+        .library(name: "Operation Macro Core", targets: ["Operation Macro Core"]),
         .library(name: "Operation Syntax", targets: ["Operation Syntax"]),
         .library(name: "Operation", targets: ["Operation"]),
 
@@ -64,6 +65,7 @@ let package = Package(
             name: "Operation Macro Plugin",
             dependencies: [
                 "Operation Macro Core",
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
