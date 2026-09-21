@@ -38,13 +38,13 @@ extension Operation {
             }
         }
 
-        // A labelled tuple output of one value type is read by label; anything else has no label index.
+        // A labelled tuple output is read by label: as its one value type, or as Any when the types differ.
         private static func labels(of symbol: Analysis.Symbol) -> (labels: [String], value: String)? {
             guard let tuple = symbol.output.as(TupleTypeSyntax.self), !tuple.elements.isEmpty else { return nil }
             let labels = tuple.elements.compactMap { $0.firstName?.text }
             let values = Set(tuple.elements.map { $0.type.trimmedDescription })
-            guard labels.count == tuple.elements.count, values.count == 1 else { return nil }
-            return (labels, values.first!)
+            guard labels.count == tuple.elements.count else { return nil }
+            return (labels, values.count == 1 ? values.first! : "Any")
         }
 
         private static func labelled(_ labels: (labels: [String], value: String), access: String) -> String {
