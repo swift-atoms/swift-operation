@@ -19,7 +19,8 @@ extension Operation {
                 guard let symbol = analysis.symbols.first(where: { $0.caseName == operation.name }) else {
                     throw Type.Failure("missing Swift representation for operation")
                 }
-                let conformance = (["Operation::Operation.Symbol"] + conformances).joined(separator: ", ")
+                let labels = Self.labels(of: symbol)
+                let conformance = (["Operation::Operation.Symbol"] + (labels == nil ? [] : ["Operation::Operation.Labelled"]) + conformances).joined(separator: ", ")
                 return DeclSyntax(stringLiteral: """
                     \(access)enum \(symbol.name): \(conformance) {
                         \(access)typealias Owner = \(owner)
@@ -30,10 +31,34 @@ extension Operation {
                         \(access)typealias Failure = \(symbol.failure.trimmedDescription)
                         \(access)typealias Application = Operation::Operation.Application<Self>
 
+                    \(labels.map { Self.labelled($0, access: access) } ?? "")
                     \(members(symbol).map(\.trimmedDescription).joined(separator: "\n"))
                     }
                     """)
             }
+        }
+
+        // A labelled tuple output of one value type is read by label; anything else has no label index.
+        private static func labels(of symbol: Analysis.Symbol) -> (labels: [String], value: String)? {
+            guard let tuple = symbol.output.as(TupleTypeSyntax.self), !tuple.elements.isEmpty else { return nil }
+            let labels = tuple.elements.compactMap { $0.firstName?.text }
+            let values = Set(tuple.elements.map { $0.type.trimmedDescription })
+            guard labels.count == tuple.elements.count, values.count == 1 else { return nil }
+            return (labels, values.first!)
+        }
+
+        private static func labelled(_ labels: (labels: [String], value: String), access: String) -> String {
+            """
+                \(access)enum Label: Swift.CaseIterable, Swift.Hashable {
+                    case \(labels.labels.joined(separator: ", "))
+                }
+                \(access)typealias Value = \(labels.value)
+                \(access)static func value(of output: Output, at label: Label) -> Value {
+                    switch label {
+                    \(labels.labels.map { "case .\($0): output.\($0)" }.joined(separator: "\n"))
+                    }
+                }
+            """
         }
 
         // A one-field input reads as its field: `input.title` is `input.list.title`; a no-field input is Nullary.

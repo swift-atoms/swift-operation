@@ -1,3 +1,4 @@
+import Operation
 import Operation_Syntax
 import Operation_Macro
 import SwiftParser
@@ -101,3 +102,19 @@ extension Greeting.Id.Input: Hashable, Sendable {}
 extension Greeting.CompletedIn.Input: Hashable, Sendable {}
 extension Greeting.CompletedMatching.Input: Hashable, Sendable {}
 extension Linear.Consume.Input: Sendable {}
+
+struct Twin {
+    @Operations
+    protocol Interface {
+        func split(_ value: Int) -> (`left half`: Int, `right half`: Int)
+        func mixed(_ value: Int) -> (count: Int, name: String)
+        func single(_ value: Int) -> Int
+    }
+}
+
+@Test func labelledOutputsAreReadByLabel() {
+    #expect(Twin.Split.Label.allCases == [.`left half`, .`right half`])
+    #expect(Twin.Split.value(of: (`left half`: 1, `right half`: 2), at: .`right half`) == 2)
+    #expect((Twin.Mixed.self as? any Operation.Labelled.Type) == nil)
+    #expect((Twin.Single.self as? any Operation.Labelled.Type) == nil)
+}
