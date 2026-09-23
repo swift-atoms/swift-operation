@@ -112,9 +112,14 @@ struct Twin {
     }
 }
 
-@Test func labelledOutputsAreReadByLabel() {
+// Whether a symbol is read by label is decided by the compiler: the constrained overload wins where it applies.
+private func isLabelled<Symbol: Operation::Operation.Symbol>(_: Symbol.Type) -> Bool { false }
+private func isLabelled<Symbol: Operation::Operation.Labelled>(_: Symbol.Type) -> Bool { true }
+
+@Test func `labelled outputs are read by label`() {
     #expect(Twin.Split.Label.allCases == [.`left half`, .`right half`])
     #expect(Twin.Split.value(of: (`left half`: 1, `right half`: 2), at: .`right half`) == 2)
-    #expect(Twin.Mixed.value(of: (count: 1, name: "one"), at: .name) as? String == "one")
-    #expect((Twin.Single.self as? any Operation.Labelled.Type) == nil)
+    #expect(isLabelled(Twin.Split.self))
+    #expect(!isLabelled(Twin.Mixed.self))
+    #expect(!isLabelled(Twin.Single.self))
 }

@@ -38,13 +38,12 @@ extension Operation {
             }
         }
 
-        // A labelled tuple output is read by label: as its one value type, or as Any when the types differ.
+        // A labelled tuple output of one value type is read by label.
         private static func labels(of symbol: Analysis.Symbol) -> (labels: [String], value: String)? {
-            guard let tuple = symbol.output.as(TupleTypeSyntax.self), !tuple.elements.isEmpty else { return nil }
+            guard let tuple = symbol.output.as(TupleTypeSyntax.self), let value = tuple.elements.first?.type.trimmedDescription else { return nil }
             let labels = tuple.elements.compactMap { $0.firstName?.text }
-            let values = Set(tuple.elements.map { $0.type.trimmedDescription })
-            guard labels.count == tuple.elements.count else { return nil }
-            return (labels, values.count == 1 ? values.first! : "Any")
+            guard labels.count == tuple.elements.count, tuple.elements.allSatisfy({ $0.type.trimmedDescription == value }) else { return nil }
+            return (labels, value)
         }
 
         private static func labelled(_ labels: (labels: [String], value: String), access: String) -> String {
@@ -61,7 +60,7 @@ extension Operation {
             """
         }
 
-        // A one-field input reads as its field: `input.title` is `input.list.title`; a no-field input is Nullary.
+        // A one-field input reads as its field: `input.title` is `input.list.title`.
         private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String, conformances: [String]) throws -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
@@ -78,7 +77,7 @@ extension Operation {
                     }
                 """
                 : ""
-            let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : symbol.inputs.isEmpty ? ["Operation::Operation.Nullary"] : []) + conformances
+            let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : []) + conformances
             let header = (!symbol.transfers && symbol.inputs.count == 1 ? "@dynamicMemberLookup\n" : "")
                 + "\(access)struct Input" + (inherited.isEmpty ? "" : ": " + inherited.joined(separator: ", ")) + " {"
             guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {

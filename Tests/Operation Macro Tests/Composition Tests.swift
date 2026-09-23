@@ -26,7 +26,7 @@ private struct Independent {
     let owner = Independent()
     #expect(Independent.Increment.run(owner, .init(4)) == 5)
     let call = Independent.Increment.call(.init(9))
-    #expect(Independent.Increment.input(from: call)?.value == 9)
+    switch call { case .increment(let application): #expect(application.value == 9) }
 }
 
 // Capabilities are declared using Swift protocols at the point of use.
@@ -36,8 +36,5 @@ extension Independent.Increment.Input: Hashable, Sendable {}
 extension Independent.Increment: Operation.Composed {
     fileprivate typealias Call = Independent.Call
     fileprivate static func call(_ input: consuming Input) -> Call { .increment(input) }
-    fileprivate static func input(from call: consuming Call) -> Input? {
-        switch call { case .increment(let application): return application.consume() }
-    }
     fileprivate static func run(_ owner: Independent, _ input: consuming Input) -> Output { owner.increment(input) }
 }

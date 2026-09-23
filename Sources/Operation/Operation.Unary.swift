@@ -5,8 +5,5 @@ extension Operation {
         associatedtype Field
 
         init(_ field: Field)
-
-        /// The one field, read back.
-        var fieldValue: Field { get }
     }
 }
