@@ -1,7 +1,7 @@
 import Operation_Macro_Core
-import SwiftSyntax
+public import SwiftSyntax
 import SwiftSyntaxBuilder
-import SwiftSyntaxMacros
+public import SwiftSyntaxMacros
 
 public struct Macro: PeerMacro {
     public static func expansion(
