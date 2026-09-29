@@ -4,7 +4,6 @@ extension Operation {
 }
 
 extension Operation {
-    // An application reads as its input: `application.id` is `application.input.id`.
     @dynamicMemberLookup
     @frozen
     public struct _Application<

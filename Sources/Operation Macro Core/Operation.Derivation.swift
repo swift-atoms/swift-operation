@@ -3,9 +3,6 @@ public import SwiftSyntax
 import SwiftSyntaxBuilder
 
 extension Operation {
-    // Symbols describe operations. Input capability conformances belong to their callers,
-    // using native extensions or explicitly forwarded derivation attributes.
-    // Transferring a parameter suppresses Copyable.
     public enum Derivation {
         public static func peers(of analysis: Analysis, inputAttributes: [AttributeSyntax] = [], inputConformances: [String] = [], conformances: [String] = [], members: (Analysis.Symbol) -> [DeclSyntax] = { _ in [] }) -> [DeclSyntax] {
             do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances, conformances: conformances, members: members) }
@@ -38,7 +35,6 @@ extension Operation {
             }
         }
 
-        // A labelled tuple output of one value type is read by label.
         private static func labels(of symbol: Analysis.Symbol) -> (labels: [String], value: String)? {
             guard let tuple = symbol.output.as(TupleTypeSyntax.self), let value = tuple.elements.first?.type.trimmedDescription else { return nil }
             let labels = tuple.elements.compactMap { $0.firstName?.text }
@@ -60,7 +56,6 @@ extension Operation {
             """
         }
 
-        // A one-field input reads as its field: `input.title` is `input.list.title`.
         private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String, conformances: [String]) throws -> String {
             let forwarding = symbol.inputs.count == 1 && !symbol.transfers
                 ? """
@@ -96,7 +91,6 @@ extension Operation {
             }
             let fields = record.declarations(access: access).joined(separator: "\n")
             let initializer = try record.initializer(access: access)
-            // A one-field input is also built from its field, whatever the field's label.
             let unary: String
             if symbol.inputs.count == 1, !symbol.transfers,
                 symbol.inputs[0].parameter.declaration.firstName.tokenKind != .wildcard

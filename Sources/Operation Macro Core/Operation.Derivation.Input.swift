@@ -3,7 +3,6 @@ public import SwiftSyntax
 import SwiftSyntaxBuilder
 
 extension Operation.Derivation {
-    /// Explicit capabilities forwarded to generated inputs; no shape inference.
     public struct Input {
         public let attributes: [AttributeSyntax]
         public let conformances: [String]

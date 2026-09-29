@@ -2,9 +2,6 @@ public import Type_Algebra_Syntax
 public import SwiftSyntax
 
 extension Operation {
-    // The reading of one function signature: its parameters with their conventions, its output, its effects
-    // and its failure — the three sorts of an `Operation.Symbol` — plus what forwarding a call to a stored
-    // arrow needs (the closure type, the invocation). Every derivation over a function starts here.
     public struct Signature {
         public enum Convention {
             case value
@@ -32,7 +29,6 @@ extension Operation {
             public let forwardingExpression: ExprSyntax
             public let ownedExpression: ExprSyntax
 
-            /// The label a call site writes, or the local name when the parameter is unlabelled.
             public var label: TokenSyntax {
                 declaration.firstName.tokenKind == .wildcard ? localName : declaration.firstName
             }
@@ -55,8 +51,6 @@ extension Operation {
         public let name: TokenSyntax
         public let fullName: String
         public let mangled: String
-        // The stored field an operation lives in: its base name, or `mangled` when the base name is overloaded.
-        // Resolved by whoever reads the whole protocol, since overloading is a property of the set.
         public var storage: String
         public let parameters: [Parameter]
         public let closureType: TypeSyntax
@@ -75,7 +69,6 @@ extension Operation {
 
         public var effects: FunctionEffectSpecifiersSyntax? { declaration.signature.effectSpecifiers }
 
-        /// The call of the stored arrow `_<storage>` with this signature's parameters, under its effects.
         public var invocation: ExprSyntax {
             let member = MemberAccessExprSyntax(
                 base: DeclReferenceExprSyntax(baseName: .keyword(.self)),

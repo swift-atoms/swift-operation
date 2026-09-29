@@ -1,7 +1,6 @@
 import Operation_Macro
 import Testing
 
-// An explicit composition contract works without @Interface, its nested protocol name, or its plugin.
 private struct Independent {
     @Operations
     protocol Ports {
@@ -29,10 +28,8 @@ private struct Independent {
     switch call { case .increment(let application): #expect(application.value == 9) }
 }
 
-// Capabilities are declared using Swift protocols at the point of use.
 extension Independent.Increment.Input: Hashable, Sendable {}
 
-// A consumer can supply the connection explicitly; the leaf macro knows no Call layout.
 extension Independent.Increment: Operation.Composed {
     fileprivate typealias Call = Independent.Call
     fileprivate static func call(_ input: consuming Input) -> Call { .increment(input) }

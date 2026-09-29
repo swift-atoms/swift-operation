@@ -94,7 +94,6 @@ struct `Operations Tests` {
     }
 }
 
-// Capabilities are declared using Swift protocols at the point of use.
 extension Greeting.Greet.Input: Hashable, Sendable {}
 extension Greeting.Echo.Input: Hashable, Sendable {}
 extension Greeting.Run.Input: Hashable, Sendable {}
@@ -112,7 +111,6 @@ struct Twin {
     }
 }
 
-// Whether a symbol is read by label is decided by the compiler: the constrained overload wins where it applies.
 private func isLabelled<Symbol: Operation::Operation.Symbol>(_: Symbol.Type) -> Bool { false }
 private func isLabelled<Symbol: Operation::Operation.Labelled>(_: Symbol.Type) -> Bool { true }
 

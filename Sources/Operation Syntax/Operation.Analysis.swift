@@ -3,17 +3,6 @@ public import SwiftSyntax
 import SwiftSyntaxBuilder
 
 extension Operation {
-    // The functions of a protocol read as operation symbols: each function becomes one symbol, named and
-    // qualified against the owner that will hold it. This is the naming table for everything derived over an
-    // operation; the derivations that compose symbols (an interface, a client) read their names from here.
-    //
-    // | derived                     | spelling                                                                |
-    // |-----------------------------|-------------------------------------------------------------------------|
-    // | symbol (`Owner.X`)           | the capitalised base name; `Run` for `callAsFunction`; when the base name |
-    // |                             | is overloaded, a variant suffix — the capitalised first label, or the   |
-    // |                             | local name when unlabelled (`Run` itself is replaced by the variant)     |
-    // | input (`Owner.X.Input`)      | the parameters as a value, initialised with the declaration's labels    |
-    // | case / requirement / label   | the lower-camel symbol name (`greet`, `run`, `id`, `completedIn`)        |
     public struct Analysis {
         public struct Symbol {
             public struct Input {
@@ -29,7 +18,6 @@ extension Operation {
             public let output: TypeSyntax
             public let failure: TypeSyntax
 
-            /// The lower-camel spelling of the symbol: its Call case, its model requirement, its label.
             public var caseName: String { "\(name.prefix(1).lowercased())\(name.dropFirst())" }
 
             public var algebra: Type.Operation {
@@ -47,7 +35,6 @@ extension Operation {
                 "\(transfers ? "consuming " : "")\(inputPath(owner: owner))"
             }
 
-            /// The input built from the declaration's parameters, labelled as declared.
             public var construction: String {
                 inputs.map { input in
                     let declaration = input.parameter.declaration
@@ -128,8 +115,6 @@ extension Operation {
     }
 }
 
-// A type named like something the owner will declare (an operation's symbol, `Input`, …) is meant as the
-// owner's own nested type; spell it so from inside the generated declarations.
 private final class DomainQualifier: SyntaxRewriter {
     let owner: TypeSyntax
     let names: Set<String>
