@@ -1,16 +1,18 @@
 import Operation
 
 struct Indexed<Index: Operation.Symbol>: ~Copyable, ~Escapable {
-    var input: Index.Input {
-        @_lifetime(copy self)
-        _read { yield storage }
-    }
-
     private var storage: Index.Input
 
     @_lifetime(copy input)
     init(_ input: consuming Index.Input) {
         storage = input
+    }
+}
+
+extension Indexed {
+    var input: Index.Input {
+        @_lifetime(copy self)
+        _read { yield storage }
     }
 }
 

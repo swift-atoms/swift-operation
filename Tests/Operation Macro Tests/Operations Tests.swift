@@ -46,7 +46,7 @@ struct `Operations Tests` {
         let _: Greeting.Greet.Input.Type = Greeting.Greet.Input.self
         let _: Greeting.Greet.Output.Type = String.self
         let _: Greeting.Greet.Failure.Type = Never.self
-        let _: Greeting.Echo.Failure.Type = (any Swift.Error).self
+        let _: Greeting.Echo.Failure.Type = (any Swift::Error).self
         let _: Greeting.Run.Output.Type = Int.self
         let _: Greeting.Id.Input.Type = Greeting.Id.Input.self
         let _: Greeting.CompletedIn.Input.Type = Greeting.CompletedIn.Input.self

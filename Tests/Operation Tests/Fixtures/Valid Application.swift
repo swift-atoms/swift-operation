@@ -1,6 +1,8 @@
 import Operation
 
-enum Echo: Operation.Symbol {
+enum Echo: Operation.Symbol {}
+
+extension Echo {
     typealias Input = Int
     typealias Output = String
     typealias Failure = Never

@@ -10,14 +10,6 @@ extension Operation {
             case sending
             case `inout`
             case unsupported
-
-            var isBorrowing: Bool {
-                if case .borrowing = self { true } else { false }
-            }
-
-            var isInout: Bool {
-                if case .inout = self { true } else { false }
-            }
         }
 
         public struct Parameter {
@@ -28,23 +20,6 @@ extension Operation {
             public let convention: Convention
             public let forwardingExpression: ExprSyntax
             public let ownedExpression: ExprSyntax
-
-            public var label: TokenSyntax {
-                declaration.firstName.tokenKind == .wildcard ? localName : declaration.firstName
-            }
-
-            public var transfersOwnership: Bool {
-                switch convention {
-                case .consuming, .sending:
-                    true
-                default:
-                    false
-                }
-            }
-
-            public var isInout: Bool {
-                if case .inout = convention { true } else { false }
-            }
         }
 
         public let declaration: FunctionDeclSyntax
@@ -59,50 +34,6 @@ extension Operation {
         public let thrownError: TypeSyntax?
         public let isUntypedThrows: Bool
         public let isRethrowing: Bool
-
-        public var algebra: Type.Operation {
-            Type.Operation(fullName,
-                input: .product(parameters.map { Type.Syntax.Expression($0.valueType, parameters: []).algebra }),
-                output: returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
-                effect: effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
-        }
-
-        public var effects: FunctionEffectSpecifiersSyntax? { declaration.signature.effectSpecifiers }
-
-        public var invocation: ExprSyntax {
-            let member = MemberAccessExprSyntax(
-                base: DeclReferenceExprSyntax(baseName: .keyword(.self)),
-                declName: DeclReferenceExprSyntax(baseName: .identifier("_\(storage)"))
-            )
-            let callee = TupleExprSyntax(
-                elements: LabeledExprListSyntax([LabeledExprSyntax(expression: member)])
-            )
-            let arguments = parameters.enumerated().map { offset, parameter in
-                LabeledExprSyntax(
-                    expression: parameter.forwardingExpression,
-                    trailingComma: offset == parameters.count - 1 ? nil : .commaToken(trailingTrivia: .space)
-                )
-            }
-            var invocation = ExprSyntax(
-                FunctionCallExprSyntax(
-                    calledExpression: callee,
-                    leftParen: .leftParenToken(),
-                    arguments: LabeledExprListSyntax(arguments),
-                    rightParen: .rightParenToken()
-                )
-            )
-            if effects?.asyncSpecifier != nil {
-                invocation = ExprSyntax(
-                    AwaitExprSyntax(awaitKeyword: .keyword(.await, trailingTrivia: .space), expression: invocation)
-                )
-            }
-            if effects?.throwsClause != nil {
-                invocation = ExprSyntax(
-                    TryExprSyntax(tryKeyword: .keyword(.try, trailingTrivia: .space), expression: invocation)
-                )
-            }
-            return invocation
-        }
 
         public init(_ declaration: FunctionDeclSyntax) {
             let parameters = declaration.signature.parameterClause.parameters.map { parameter in
@@ -173,34 +104,109 @@ extension Operation {
             isUntypedThrows = throwsClause != nil && throwsClause?.type == nil
             isRethrowing = throwsClause?.throwsSpecifier.tokenKind == .keyword(.rethrows)
         }
+    }
+}
 
-        private static func value(
-            of parameter: FunctionParameterSyntax
-        ) -> (type: TypeSyntax, convention: Convention) {
-            guard var attributed = parameter.type.as(AttributedTypeSyntax.self) else {
-                return (parameter.type, .value)
-            }
-            var convention = Convention.value
-            for specifier in attributed.specifiers {
-                guard let simple = specifier.as(SimpleTypeSpecifierSyntax.self) else {
-                    convention = .unsupported
-                    break
-                }
-                switch simple.specifier.tokenKind {
-                case .keyword(.borrowing), .identifier("__shared"):
-                    convention = .borrowing
-                case .keyword(.consuming), .identifier("__owned"):
-                    convention = .consuming
-                case .keyword(.sending):
-                    convention = .sending
-                case .keyword(.inout):
-                    convention = .inout
-                default:
-                    convention = .unsupported
-                }
-            }
-            attributed.specifiers = []
-            return (TypeSyntax(attributed), convention)
+extension Operation.Signature.Convention {
+    var isBorrowing: Bool {
+        if case .borrowing = self { true } else { false }
+    }
+
+    var isInout: Bool {
+        if case .inout = self { true } else { false }
+    }
+}
+
+extension Operation.Signature.Parameter {
+    public var label: TokenSyntax {
+        declaration.firstName.tokenKind == .wildcard ? localName : declaration.firstName
+    }
+
+    public var transfersOwnership: Bool {
+        switch convention {
+        case .consuming, .sending:
+            true
+        default:
+            false
         }
+    }
+
+    public var isInout: Bool {
+        if case .inout = convention { true } else { false }
+    }
+}
+
+extension Operation.Signature {
+    public var algebra: Type.Operation {
+        Type.Operation(fullName,
+            input: .product(parameters.map { Type.Syntax.Expression($0.valueType, parameters: []).algebra }),
+            output: returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
+            effect: effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+    }
+
+    public var effects: FunctionEffectSpecifiersSyntax? { declaration.signature.effectSpecifiers }
+
+    public var invocation: ExprSyntax {
+        let member = MemberAccessExprSyntax(
+            base: DeclReferenceExprSyntax(baseName: .keyword(.self)),
+            declName: DeclReferenceExprSyntax(baseName: .identifier("_\(storage)"))
+        )
+        let callee = TupleExprSyntax(
+            elements: LabeledExprListSyntax([LabeledExprSyntax(expression: member)])
+        )
+        let arguments = parameters.enumerated().map { offset, parameter in
+            LabeledExprSyntax(
+                expression: parameter.forwardingExpression,
+                trailingComma: offset == parameters.count - 1 ? nil : .commaToken(trailingTrivia: .space)
+            )
+        }
+        var invocation = ExprSyntax(
+            FunctionCallExprSyntax(
+                calledExpression: callee,
+                leftParen: .leftParenToken(),
+                arguments: LabeledExprListSyntax(arguments),
+                rightParen: .rightParenToken()
+            )
+        )
+        if effects?.asyncSpecifier != nil {
+            invocation = ExprSyntax(
+                AwaitExprSyntax(awaitKeyword: .keyword(.await, trailingTrivia: .space), expression: invocation)
+            )
+        }
+        if effects?.throwsClause != nil {
+            invocation = ExprSyntax(
+                TryExprSyntax(tryKeyword: .keyword(.try, trailingTrivia: .space), expression: invocation)
+            )
+        }
+        return invocation
+    }
+
+    private static func value(
+        of parameter: FunctionParameterSyntax
+    ) -> (type: TypeSyntax, convention: Convention) {
+        guard var attributed = parameter.type.as(AttributedTypeSyntax.self) else {
+            return (parameter.type, .value)
+        }
+        var convention = Convention.value
+        for specifier in attributed.specifiers {
+            guard let simple = specifier.as(SimpleTypeSpecifierSyntax.self) else {
+                convention = .unsupported
+                break
+            }
+            switch simple.specifier.tokenKind {
+            case .keyword(.borrowing), .identifier("__shared"):
+                convention = .borrowing
+            case .keyword(.consuming), .identifier("__owned"):
+                convention = .consuming
+            case .keyword(.sending):
+                convention = .sending
+            case .keyword(.inout):
+                convention = .inout
+            default:
+                convention = .unsupported
+            }
+        }
+        attributed.specifiers = []
+        return (TypeSyntax(attributed), convention)
     }
 }

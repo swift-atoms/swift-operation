@@ -56,7 +56,7 @@ let package = Package(
             name: "Operation Macro Core",
             dependencies: [
                 .product(name: "Type Algebra Syntax", package: "swift-algebra"),
-                "Operation Syntax",
+                .target(name: "Operation Syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
             ]
@@ -64,7 +64,7 @@ let package = Package(
         .macro(
             name: "Operation Macro Plugin",
             dependencies: [
-                "Operation Macro Core",
+                .target(name: "Operation Macro Core"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
@@ -74,15 +74,15 @@ let package = Package(
         .target(
             name: "Operation Macro",
             dependencies: [
-                "Operation Macro Plugin",
+                .target(name: "Operation Macro Plugin"),
                 .target(name: "Operation"),
             ]
         ),
         .testTarget(
             name: "Operation Macro Tests",
             dependencies: [
-                "Operation Macro",
-                "Operation Macro Core",
+                .target(name: "Operation Macro"),
+                .target(name: "Operation Macro Core"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
             ]
         ),
@@ -91,7 +91,6 @@ let package = Package(
             dependencies: [
                 .target(name: "Operation"),
                 .target(name: "Operation Test Support"),
-                .target(name: "Operation Foundation Integration"),
             ],
             path: "Tests/Operation Tests",
             resources: [.copy("Fixtures")]
@@ -100,7 +99,7 @@ let package = Package(
     swiftLanguageModes: [.v6]
 )
 
-for target in package.targets where ![.system, .binary, .plugin].contains(target.type) {
+for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     target.swiftSettings = (target.swiftSettings ?? []) + [
         .strictMemorySafety(),
         .enableUpcomingFeature("ExistentialAny"),

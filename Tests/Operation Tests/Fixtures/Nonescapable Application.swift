@@ -4,7 +4,9 @@ enum View: ~Escapable {
     case value(Int)
 }
 
-enum Inspect: Operation.Symbol {
+enum Inspect: Operation.Symbol {}
+
+extension Inspect {
     typealias Input = View
     typealias Output = Void
     typealias Failure = Never

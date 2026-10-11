@@ -13,7 +13,7 @@ extension Operation::Operation {
             let emittedObject: Bool
         }
 
-        enum Failure: Swift.Error {
+        enum Failure: Swift::Error {
             case timedOut(String)
         }
     }

@@ -17,47 +17,7 @@ extension Operation {
             public let inputs: [Input]
             public let output: TypeSyntax
             public let failure: TypeSyntax
-
-            public var caseName: String { "\(name.prefix(1).lowercased())\(name.dropFirst())" }
-
-            public var algebra: Type.Operation {
-                Type.Operation(caseName,
-                    input: .product(inputs.map { Type.Syntax.Expression($0.type, parameters: []).algebra }),
-                    output: signature.returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
-                    effect: signature.effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
-            }
-
-            public var transfers: Bool { inputs.contains { $0.parameter.transfersOwnership } }
-
-            public func inputPath(owner: String) -> String { "\(owner).\(name).Input" }
-
-            public func inputParameter(owner: String) -> String {
-                "\(transfers ? "consuming " : "")\(inputPath(owner: owner))"
-            }
-
-            public var construction: String {
-                inputs.map { input in
-                    let declaration = input.parameter.declaration
-                    let label = declaration.firstName.tokenKind == .wildcard ? "" : "\(declaration.firstName.text): "
-                    return "\(label)\(input.parameter.ownedExpression.trimmedDescription)"
-                }.joined(separator: ", ")
-            }
-
-            public var effects: String {
-                signature.effects.map { " \($0.trimmedDescription)" } ?? ""
-            }
-
-            public var prefix: String {
-                (signature.effects?.throwsClause != nil ? "try " : "")
-                    + (signature.effects?.asyncSpecifier != nil ? "await " : "")
-            }
         }
-
-        public static let derived = [
-            "Input", "Output", "Failure", "Application", "Run",
-        ]
-
-        public var algebra: Type.Signature { get throws { try Type.Signature(symbols.map(\.algebra)) } }
 
         public let declaration: ProtocolDeclSyntax
         public let owner: TypeSyntax
@@ -113,6 +73,49 @@ extension Operation {
             diagnostics = reasons
         }
     }
+}
+
+extension Operation.Analysis.Symbol {
+    public var caseName: String { "\(name.prefix(1).lowercased())\(name.dropFirst())" }
+
+    public var algebra: Type.Operation {
+        Type.Operation(caseName,
+            input: .product(inputs.map { Type.Syntax.Expression($0.type, parameters: []).algebra }),
+            output: signature.returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
+            effect: signature.effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+    }
+
+    public var transfers: Bool { inputs.contains { $0.parameter.transfersOwnership } }
+    public func inputPath(owner: String) -> String { "\(owner).\(name).Input" }
+
+    public func inputParameter(owner: String) -> String {
+        "\(transfers ? "consuming " : "")\(inputPath(owner: owner))"
+    }
+
+    public var construction: String {
+        inputs.map { input in
+            let declaration = input.parameter.declaration
+            let label = declaration.firstName.tokenKind == .wildcard ? "" : "\(declaration.firstName.text): "
+            return "\(label)\(input.parameter.ownedExpression.trimmedDescription)"
+        }.joined(separator: ", ")
+    }
+
+    public var effects: String {
+        signature.effects.map { " \($0.trimmedDescription)" } ?? ""
+    }
+
+    public var prefix: String {
+        (signature.effects?.throwsClause != nil ? "try " : "")
+            + (signature.effects?.asyncSpecifier != nil ? "await " : "")
+    }
+}
+
+extension Operation.Analysis {
+    public static let derived = [
+        "Input", "Output", "Failure", "Application", "Run",
+    ]
+
+    public var algebra: Type.Signature { get throws { try Type.Signature(symbols.map(\.algebra)) } }
 }
 
 private final class DomainQualifier: SyntaxRewriter {

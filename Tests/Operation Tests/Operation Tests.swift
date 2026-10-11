@@ -87,7 +87,7 @@ extension Operation {
             typealias Failure = Never
         }
 
-        enum ReadingFailure: Swift.Error, Equatable {
+        enum ReadingFailure: Swift::Error, Equatable {
             case rejected(Int)
         }
 

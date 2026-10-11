@@ -2,7 +2,9 @@ import Operation
 
 struct Token: ~Copyable {}
 
-enum Consume: Operation.Symbol {
+enum Consume: Operation.Symbol {}
+
+extension Consume {
     typealias Input = Token
     typealias Output = Void
     typealias Failure = Never
