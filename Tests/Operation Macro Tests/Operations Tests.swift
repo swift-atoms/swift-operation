@@ -1,6 +1,6 @@
 import Operation
-import Operation_Syntax
 import Operation_Macro
+import Operation_Syntax
 import SwiftParser
 import SwiftSyntax
 import Testing

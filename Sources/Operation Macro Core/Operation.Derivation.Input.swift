@@ -1,6 +1,6 @@
-import Type_Algebra_Syntax
 public import SwiftSyntax
 import SwiftSyntaxBuilder
+import Type_Algebra_Syntax
 
 extension Operation.Derivation {
     public struct Input {
@@ -14,7 +14,8 @@ extension Operation.Derivation {
                 }
                 for element in array.elements {
                     guard let literal = element.expression.as(StringLiteralExprSyntax.self), literal.segments.count == 1,
-                        let segment = literal.segments.first?.as(StringSegmentSyntax.self) else {
+                        let segment = literal.segments.first?.as(StringSegmentSyntax.self)
+                    else {
                         throw Type.Failure("inputConformances requires literal protocol names")
                     }
                     let parsed = TypeSyntax(stringLiteral: segment.content.text)
@@ -31,14 +32,16 @@ extension Operation.Derivation {
                 guard readingAttributes else { continue }
                 guard let literal = argument.expression.as(StringLiteralExprSyntax.self),
                     literal.segments.count == 1,
-                    let segment = literal.segments.first?.as(StringSegmentSyntax.self) else {
+                    let segment = literal.segments.first?.as(StringSegmentSyntax.self)
+                else {
                     throw Type.Failure("inputAttributes requires literal attribute strings without interpolation")
                 }
                 let parsed = DeclSyntax(stringLiteral: segment.content.text + "\nstruct _Input {}")
                 guard !parsed.hasError, let structure = parsed.as(StructDeclSyntax.self),
                     structure.name.text == "_Input", structure.memberBlock.members.isEmpty,
                     structure.modifiers.isEmpty, !structure.attributes.isEmpty,
-                    structure.attributes.allSatisfy({ $0.is(AttributeSyntax.self) }) else {
+                    structure.attributes.allSatisfy({ $0.is(AttributeSyntax.self) })
+                else {
                     throw Type.Failure("inputAttributes accepts only attributes, for example \"@Finite\"")
                 }
                 attributes += structure.attributes.compactMap { $0.as(AttributeSyntax.self) }

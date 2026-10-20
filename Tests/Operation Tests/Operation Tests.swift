@@ -185,7 +185,7 @@ extension Operation.`Applications preserve their input` {
     func `A nonescapable input can still be borrowed and copied`() {
         let application = Operation.Application<Self.Inspect>(.value(42))
         Self.requireCopyableIndependently(application)
-        guard case let .value(value) = application.input else {
+        guard case .value(let value) = application.input else {
             Issue.record("Expected the stored view")
             return
         }

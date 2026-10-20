@@ -1,6 +1,6 @@
-public import Type_Algebra_Syntax
 public import SwiftSyntax
 import SwiftSyntaxBuilder
+public import Type_Algebra_Syntax
 
 extension Operation {
     public struct Analysis {
@@ -79,10 +79,12 @@ extension Operation.Analysis.Symbol {
     public var caseName: String { "\(name.prefix(1).lowercased())\(name.dropFirst())" }
 
     public var algebra: Type.Operation {
-        Type.Operation(caseName,
+        Type.Operation(
+            caseName,
             input: .product(inputs.map { Type.Syntax.Expression($0.type, parameters: []).algebra }),
             output: signature.returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
-            effect: signature.effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+            effect: signature.effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) }
+        )
     }
 
     public var transfers: Bool { inputs.contains { $0.parameter.transfersOwnership } }

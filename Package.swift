@@ -26,29 +26,31 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "603.0.2"..<"604.0.0"),
     ],
     targets: [
-        .target(name: "Operation Syntax", dependencies: [
+        .target(
+            name: "Operation Syntax",
+            dependencies: [
                 .product(name: "Type Algebra Syntax", package: "swift-algebra"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
-            .product(name: "SwiftSyntax", package: "swift-syntax"),
-        ]),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+            ]
+        ),
         .target(
             name: "Operation",
-            dependencies: [
-            ],
+            dependencies: [],
             path: "Sources/Operation"
         ),
 
         .target(
             name: "Operation Foundation Integration",
             dependencies: [
-                .target(name: "Operation"),
+                .target(name: "Operation")
             ],
             path: "Sources/Operation Foundation Integration"
         ),
         .target(
             name: "Operation Test Support",
             dependencies: [
-                .target(name: "Operation"),
+                .target(name: "Operation")
             ],
             path: "Tests/Support"
         ),
@@ -100,14 +102,15 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    target.swiftSettings = (target.swiftSettings ?? []) + [
-        .strictMemorySafety(),
-        .enableUpcomingFeature("ExistentialAny"),
-        .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility"),
-        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableUpcomingFeature("InferIsolatedConformances"),
-        .enableExperimentalFeature("Lifetimes"),
-        .treatAllWarnings(as: .error),
-    ]
+    target.swiftSettings =
+        (target.swiftSettings ?? []) + [
+            .strictMemorySafety(),
+            .enableUpcomingFeature("ExistentialAny"),
+            .enableUpcomingFeature("InternalImportsByDefault"),
+            .enableUpcomingFeature("MemberImportVisibility"),
+            .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+            .enableUpcomingFeature("InferIsolatedConformances"),
+            .enableExperimentalFeature("Lifetimes"),
+            .treatAllWarnings(as: .error),
+        ]
 }

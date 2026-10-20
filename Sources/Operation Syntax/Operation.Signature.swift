@@ -1,5 +1,5 @@
-public import Type_Algebra_Syntax
 public import SwiftSyntax
+public import Type_Algebra_Syntax
 
 extension Operation {
     public struct Signature {
@@ -59,7 +59,8 @@ extension Operation {
                         : ExprSyntax(reference)
                 )
             }
-            let output = declaration.signature.returnClause?.type
+            let output =
+                declaration.signature.returnClause?.type
                 ?? TypeSyntax(IdentifierTypeSyntax(name: .identifier("Void")))
             let effectSpecifiers = declaration.signature.effectSpecifiers
             let throwsClause = effectSpecifiers?.throwsClause
@@ -138,10 +139,12 @@ extension Operation.Signature.Parameter {
 
 extension Operation.Signature {
     public var algebra: Type.Operation {
-        Type.Operation(fullName,
+        Type.Operation(
+            fullName,
             input: .product(parameters.map { Type.Syntax.Expression($0.valueType, parameters: []).algebra }),
             output: returnsVoid ? .unit : Type.Syntax.Expression(output, parameters: []).algebra,
-            effect: effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) })
+            effect: effects.map { .init($0.trimmedDescription, scope: ["Swift", "Effects"]) }
+        )
     }
 
     public var effects: FunctionEffectSpecifiersSyntax? { declaration.signature.effectSpecifiers }

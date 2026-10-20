@@ -1,15 +1,28 @@
-import Type_Algebra_Syntax
 public import SwiftSyntax
 import SwiftSyntaxBuilder
+import Type_Algebra_Syntax
 
 extension Operation {
     public enum Derivation {
-        public static func peers(of analysis: Analysis, inputAttributes: [AttributeSyntax] = [], inputConformances: [String] = [], conformances: [String] = [], members: (Analysis.Symbol) -> [DeclSyntax] = { _ in [] }) -> [DeclSyntax] {
-            do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances, conformances: conformances, members: members) }
-            catch { return [DeclSyntax(stringLiteral: "#error(\(String(reflecting: String(describing: error))))")] }
+        public static func peers(
+            of analysis: Analysis,
+            inputAttributes: [AttributeSyntax] = [],
+            inputConformances: [String] = [],
+            conformances: [String] = [],
+            members: (Analysis.Symbol) -> [DeclSyntax] = { _ in [] }
+        ) -> [DeclSyntax] {
+            do { return try derive(analysis, inputAttributes: inputAttributes, inputConformances: inputConformances, conformances: conformances, members: members) } catch {
+                return [DeclSyntax(stringLiteral: "#error(\(String(reflecting: String(describing: error))))")]
+            }
         }
 
-        private static func derive(_ analysis: Analysis, inputAttributes: [AttributeSyntax], inputConformances: [String], conformances: [String], members: (Analysis.Symbol) -> [DeclSyntax]) throws -> [DeclSyntax] {
+        private static func derive(
+            _ analysis: Analysis,
+            inputAttributes: [AttributeSyntax],
+            inputConformances: [String],
+            conformances: [String],
+            members: (Analysis.Symbol) -> [DeclSyntax]
+        ) throws -> [DeclSyntax] {
             let access = access(of: analysis.declaration)
             let owner = analysis.owner.trimmedDescription
             return try analysis.algebra.operations.map { operation in
@@ -18,20 +31,22 @@ extension Operation {
                 }
                 let labels = Self.labels(of: symbol)
                 let conformance = (["Operation::Operation.Symbol"] + (labels == nil ? [] : ["Operation::Operation.Labelled"]) + conformances).joined(separator: ", ")
-                return DeclSyntax(stringLiteral: """
-                    \(access)enum \(symbol.name): \(conformance) {
-                        \(access)typealias Owner = \(owner)
-                    \(inputAttributes.map(\.trimmedDescription).joined(separator: "\n"))
-                    \(try input(of: symbol, domain: operation.input, access: access, conformances: inputConformances))
+                return DeclSyntax(
+                    stringLiteral: """
+                        \(access)enum \(symbol.name): \(conformance) {
+                            \(access)typealias Owner = \(owner)
+                        \(inputAttributes.map(\.trimmedDescription).joined(separator: "\n"))
+                        \(try input(of: symbol, domain: operation.input, access: access, conformances: inputConformances))
 
-                        \(access)typealias Output = \(symbol.output.trimmedDescription)
-                        \(access)typealias Failure = \(symbol.failure.trimmedDescription)
-                        \(access)typealias Application = Operation::Operation.Application<Self>
+                            \(access)typealias Output = \(symbol.output.trimmedDescription)
+                            \(access)typealias Failure = \(symbol.failure.trimmedDescription)
+                            \(access)typealias Application = Operation::Operation.Application<Self>
 
-                    \(labels.map { Self.labelled($0, access: access) } ?? "")
-                    \(members(symbol).map(\.trimmedDescription).joined(separator: "\n"))
-                    }
-                    """)
+                        \(labels.map { Self.labelled($0, access: access) } ?? "")
+                        \(members(symbol).map(\.trimmedDescription).joined(separator: "\n"))
+                        }
+                        """
+                )
             }
         }
 
@@ -57,7 +72,8 @@ extension Operation {
         }
 
         private static func input(of symbol: Analysis.Symbol, domain: Type.Expression, access: String, conformances: [String]) throws -> String {
-            let forwarding = symbol.inputs.count == 1 && !symbol.transfers
+            let forwarding =
+                symbol.inputs.count == 1 && !symbol.transfers
                 ? """
 
                     \(symbol.inputs[0].parameter.localName.text == "fieldValue" ? "" : "\(access)var fieldValue: \(symbol.inputs[0].type.trimmedDescription) { \(symbol.inputs[0].parameter.localName.text) }")
@@ -73,7 +89,8 @@ extension Operation {
                 """
                 : ""
             let inherited = (symbol.transfers ? ["~Copyable"] : symbol.inputs.count == 1 ? ["Operation::Operation.Unary"] : []) + conformances
-            let header = (!symbol.transfers && symbol.inputs.count == 1 ? "@dynamicMemberLookup\n" : "")
+            let header =
+                (!symbol.transfers && symbol.inputs.count == 1 ? "@dynamicMemberLookup\n" : "")
                 + "\(access)struct Input" + (inherited.isEmpty ? "" : ": " + inherited.joined(separator: ", ")) + " {"
             guard case .product(let factors) = domain, factors.count == symbol.inputs.count else {
                 throw Type.Failure("operation input representation must match its product domain")
@@ -86,8 +103,12 @@ extension Operation {
                 let declaration = input.parameter.declaration
                 let label = declaration.firstName.tokenKind == .wildcard ? "_" : declaration.firstName.text
                 let type = input.type.trimmedDescription
-                return .init(input.parameter.localName.text, type: type, label: label,
-                    argument: input.parameter.transfersOwnership ? "consuming \(type)" : type)
+                return .init(
+                    input.parameter.localName.text,
+                    type: type,
+                    label: label,
+                    argument: input.parameter.transfersOwnership ? "consuming \(type)" : type
+                )
             }
             let fields = record.declarations(access: access).joined(separator: "\n")
             let initializer = try record.initializer(access: access)
@@ -98,10 +119,10 @@ extension Operation {
                 let local = symbol.inputs[0].parameter.localName.text
                 unary = """
 
-                    \(access)init(_ field: \(symbol.inputs[0].type.trimmedDescription)) {
-                        self.\(local) = field
-                    }
-                """
+                        \(access)init(_ field: \(symbol.inputs[0].type.trimmedDescription)) {
+                            self.\(local) = field
+                        }
+                    """
             } else {
                 unary = ""
             }

@@ -16,7 +16,9 @@ private struct Independent {
         static var cases: Void { () }
         static func increment(_ input: Increment.Input) -> Self { .increment(.init(input)) }
         static func run(_ owner: Owner, _ call: consuming Self) async throws {
-            switch call { case .increment(let application): _ = owner.increment(application.consume()) }
+            switch call {
+            case .increment(let application): _ = owner.increment(application.consume())
+            }
         }
     }
 }
@@ -25,7 +27,9 @@ private struct Independent {
     let owner = Independent()
     #expect(Independent.Increment.run(owner, .init(4)) == 5)
     let call = Independent.Increment.call(.init(9))
-    switch call { case .increment(let application): #expect(application.value == 9) }
+    switch call {
+    case .increment(let application): #expect(application.value == 9)
+    }
 }
 
 extension Independent.Increment.Input: Hashable, Sendable {}

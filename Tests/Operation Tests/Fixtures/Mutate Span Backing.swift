@@ -1,5 +1,10 @@
 import Operation
-enum Inspect: Operation.Symbol { typealias Input = Span<Int>; typealias Output = Void; typealias Failure = Never }
+
+enum Inspect: Operation.Symbol {
+    typealias Input = Span<Int>
+    typealias Output = Void
+    typealias Failure = Never
+}
 func check() {
     var values = [1, 2]
     let application = Operation.Application<Inspect>(values.span)
