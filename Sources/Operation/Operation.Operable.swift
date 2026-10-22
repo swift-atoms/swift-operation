@@ -1,3 +1,5 @@
+import _Concurrency
+
 extension Operation {
     public protocol Operable: Symbol where Input: Escapable, Output: Escapable {
         static func run(_ owner: Owner, _ input: consuming Input) async throws -> Output

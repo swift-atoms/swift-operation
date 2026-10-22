@@ -1,3 +1,5 @@
+import _Concurrency
+
 extension Operation {
     public protocol Coproduct: ~Copyable, ~Escapable {
         associatedtype Cases
